@@ -3,9 +3,11 @@ package api.rest.controller;
 import java.util.List;
 import java.util.Optional;
 
+import api.rest.exceptions.GeralException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,118 +22,120 @@ import api.rest.model.Usuario;
 import api.rest.repository.UsuarioRepository;
 
 
-
 @RestController  /* Arquitetura REST */
 @RequestMapping(value = "/usuario")
 public class IndexController {
 
-	@Autowired /* de fosse CDI seria @Inject*/
-	private UsuarioRepository usuarioRepository;
-	
-	
-	/* Serviço RESTful */
-	@GetMapping(value = "/{id}/codigovenda/{venda}", produces = "application/json")
-	public ResponseEntity<Usuario> relatorio(@PathVariable (value = "id") Long id
-			                                , @PathVariable (value = "venda") Long venda) {
-		
-		Optional<Usuario> usuario = usuarioRepository.findById(id);
-		
-		/*o retorno seria um relatorio*/
-		return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
-	}
-	
+    @Autowired /* de fosse CDI seria @Inject*/
+    private UsuarioRepository usuarioRepository;
 
-	/* Serviço RESTful */
-	@GetMapping(value = "/{id}", produces = "application/json")
-	public ResponseEntity<Usuario> init(@PathVariable (value = "id") Long id) {
-		
-		Optional<Usuario> usuario = usuarioRepository.findById(id);
-		
-		return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
-	}
-	
-	@DeleteMapping(value = "/{id}", produces = "application/text")
-	public String delete (@PathVariable("id") Long id){
-		
-		usuarioRepository.deleteById(id);
-		
-		return "ok";
-	}
-	
-	
-	@DeleteMapping(value = "/{id}/venda", produces = "application/text")
-	public String deletevenda(@PathVariable("id") Long id){
-		
-		usuarioRepository.deleteById(id);
-		
-		return "ok";
-	}
-	
-	
-	@GetMapping(value = "/", produces = "application/json")
-	public ResponseEntity<List<Usuario>> usuario (){
-		
-		List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
-		
-		return new ResponseEntity<List<Usuario>>(list, HttpStatus.OK);
-	}
-	
-	
-	@PostMapping(value = "/", produces = "application/json")
-	public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
-		
-		for (int pos = 0; pos < usuario.getTelefones().size(); pos ++) {
-			usuario.getTelefones().get(pos).setUsuario(usuario);
-		}
-		
-		Usuario usuarioSalvo = usuarioRepository.save(usuario);
-		
-		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
-		
-	}
-	
-	
-	@PutMapping(value = "/", produces = "application/json")
-	public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
-		
-		/*outras rotinas antes de atualizar*/
-		
-		for (int pos = 0; pos < usuario.getTelefones().size(); pos ++) {
-			usuario.getTelefones().get(pos).setUsuario(usuario);
-		}
-		
-		Usuario usuarioSalvo = usuarioRepository.save(usuario);
-		
-		return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
-		
-	}
-	
-	
-	
-	@PutMapping(value = "/{iduser}/idvenda/{idvenda}", produces = "application/json")
-	public ResponseEntity updateVenda(@PathVariable Long iduser, 
-			                                     @PathVariable Long idvenda) {
-		/*outras rotinas antes de atualizar*/
-		
-		//Usuario usuarioSalvo = usuarioRepository.save(usuario);
-		
-		return new ResponseEntity("Venda atualzada", HttpStatus.OK);
-		
-	}
-	
-	
-	@PostMapping(value = "/{iduser}/idvenda/{idvenda}", produces = "application/json")
-	public ResponseEntity cadastrarvenda(@PathVariable Long iduser, 
-			                                     @PathVariable Long idvenda) {
-		
-		/*Aqui seria o processo de venda*/
-		//Usuario usuarioSalvo = usuarioRepository.save(usuario);
-		
-		return new ResponseEntity("id user :" + iduser + " idvenda :"+ idvenda, HttpStatus.OK);
-		
-	}
-	
-	
-	
+
+    /* Serviço RESTful */
+    @GetMapping(value = "/{id}/codigovenda/{venda}", produces = "application/json")
+    public ResponseEntity<Usuario> relatorio(@PathVariable(value = "id") Long id
+            , @PathVariable(value = "venda") Long venda) {
+
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
+
+        /*o retorno seria um relatorio*/
+        return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
+    }
+
+
+    /* Serviço RESTful */
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> init(@PathVariable(value = "id") Long id) {
+
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
+
+        return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/{id}", produces = "application/text")
+    public String delete(@PathVariable("id") Long id) {
+
+        usuarioRepository.deleteById(id);
+
+        return "ok";
+    }
+
+
+    @DeleteMapping(value = "/{id}/venda", produces = "application/text")
+    public String deletevenda(@PathVariable("id") Long id) {
+
+        usuarioRepository.deleteById(id);
+
+        return "ok";
+    }
+
+
+    @GetMapping(value = "/", produces = "application/json")
+    public ResponseEntity<List<Usuario>> usuario() {
+
+        List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
+
+        return new ResponseEntity<List<Usuario>>(list, HttpStatus.OK);
+    }
+
+
+    @PostMapping(value = "/", produces = "application/json")
+    public ResponseEntity<?> cadastrar(@RequestBody Usuario usuario) throws GeralException {
+
+        for (int pos = 0; pos < usuario.getTelefones().size(); pos++) {
+            usuario.getTelefones().get(pos).setUsuario(usuario);
+        }
+
+        usuario.setSenha(new BCryptPasswordEncoder().encode(usuario.getSenha()));
+
+        Usuario usuarioBuscado = usuarioRepository.findUserByLogin(usuario.getLogin());
+        if (usuarioBuscado != null) {
+            throw new GeralException("Usuário já castrado");
+        }
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+        usuarioSalvo.setSenha("NÃO DISPONIVEL");
+        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+
+    }
+
+
+    @PutMapping(value = "/", produces = "application/json")
+    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
+
+        /*outras rotinas antes de atualizar*/
+
+        for (int pos = 0; pos < usuario.getTelefones().size(); pos++) {
+            usuario.getTelefones().get(pos).setUsuario(usuario);
+        }
+
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+
+        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+
+    }
+
+
+    @PutMapping(value = "/{iduser}/idvenda/{idvenda}", produces = "application/json")
+    public ResponseEntity updateVenda(@PathVariable Long iduser,
+                                      @PathVariable Long idvenda) {
+        /*outras rotinas antes de atualizar*/
+
+        //Usuario usuarioSalvo = usuarioRepository.save(usuario);
+
+        return new ResponseEntity("Venda atualzada", HttpStatus.OK);
+
+    }
+
+
+    @PostMapping(value = "/{iduser}/idvenda/{idvenda}", produces = "application/json")
+    public ResponseEntity cadastrarvenda(@PathVariable Long iduser,
+                                         @PathVariable Long idvenda) {
+
+        /*Aqui seria o processo de venda*/
+        //Usuario usuarioSalvo = usuarioRepository.save(usuario);
+
+        return new ResponseEntity("id user :" + iduser + " idvenda :" + idvenda, HttpStatus.OK);
+
+    }
+
 
 }

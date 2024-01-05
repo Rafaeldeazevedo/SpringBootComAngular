@@ -27,21 +27,23 @@ public class Springrestapi implements WebMvcConfigurer {
 
 	public static void main(String[] args) {
 		SpringApplication.run(Springrestapi.class, args);
-		System.out.println(new BCryptPasswordEncoder().encode("123"));
+		System.out.println(new BCryptPasswordEncoder().encode("rafinha"));
 	}
 
-	  /*Mapeamento Global que refletem em todo o sistema*/
-		@Override
-		public void addCorsMappings(CorsRegistry registry) {
-			
-			registry.addMapping("/usuario/**")
-			.allowedMethods("*")
-			.allowedOrigins("*");
-			/*Liberando o mapeamento de usuario para todas as origens*/
-			
-		}
+	 
+		
 	
 	
-	
-	
+/*Mapeamento Global que refletem em todo o sistema*/
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		
+		registry.addMapping("/usuario/**")
+		.allowedMethods("*")
+		.allowedOrigins("*");
+		/*Liberando o mapeamento de usuario para todas as origens*/
+		
+	}
+
+
 }

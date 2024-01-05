@@ -63,11 +63,9 @@ public class JWTTokenAutenticacaoSercice {
 		
 		if (token != null) {
 			
-			String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
-			
 			/*Faz a validação do token do usuário na requisição*/
 			String user = Jwts.parser().setSigningKey(SECRET) /*Bearer 87878we8we787w8e78w78e78w7e87w*/
-								.parseClaimsJws(tokenLimpo) /*87878we8we787w8e78w78e78w7e87w*/
+								.parseClaimsJws(token.replace(TOKEN_PREFIX, "")) /*87878we8we787w8e78w78e78w7e87w*/
 								.getBody().getSubject(); /*João Silva*/
 			if (user != null) {
 				
@@ -76,16 +74,15 @@ public class JWTTokenAutenticacaoSercice {
 				
 				if (usuario != null) {
 					
+					return new UsernamePasswordAuthenticationToken(
+							usuario.getLogin(), 
+							usuario.getSenha(),
+							usuario.getAuthorities());
 					
-						return new UsernamePasswordAuthenticationToken(
-								usuario.getLogin(), 
-								usuario.getSenha(),
-								usuario.getAuthorities());
-				  }
 				}
 			}
 			
-		
+		}
 	
 		return null; /*Não autorizado*/
 		

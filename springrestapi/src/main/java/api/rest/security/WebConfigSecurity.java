@@ -19,16 +19,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import ch.qos.logback.core.pattern.color.BoldCyanCompositeConverter;
 
 /*Mapeaia URL, enderecos, autoriza ou bloqueia acessoa a URL*/
-
-
-
-/*Mapeaia URL, enderecos, autoriza ou bloqueia acessoa a URL*/
 @Configuration
 @EnableWebSecurity
 public class WebConfigSecurity extends WebSecurityConfigurerAdapter {
 	
 	@Autowired
 	private ImplementacaoUserDetailsService implementacaoUserDetailsService;
+	
 	
 	/*Configura as solicitações de acesso por Http*/
 	@Override
@@ -58,13 +55,14 @@ public class WebConfigSecurity extends WebSecurityConfigurerAdapter {
 	
 	
 	
-	
-	
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 
-		auth.userDetailsService(implementacaoUserDetailsService)
-		.passwordEncoder(new BCryptPasswordEncoder());
+	/*Service que irá consultar o usuário no banco de dados*/	
+	auth.userDetailsService(implementacaoUserDetailsService)
+	
+	/*Padrão de codigição de senha*/
+	.passwordEncoder(new BCryptPasswordEncoder());
 	
 	}
 
