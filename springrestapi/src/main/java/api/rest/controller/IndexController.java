@@ -3,12 +3,13 @@ package api.rest.controller;
 import java.util.List;
 import java.util.Optional;
 
-import api.rest.exceptions.GeralException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import api.rest.exceptions.GeralException;
 import api.rest.model.Usuario;
 import api.rest.repository.UsuarioRepository;
 
@@ -43,14 +45,21 @@ public class IndexController {
 
 
     /* Serviço RESTful */
+    
     @GetMapping(value = "/{id}", produces = "application/json")
+    @Cacheable("cacheuser")
+    @CacheEvict(value = "cacheuser", allEntries = true)
+    @CachePut("cacheuser")
     public ResponseEntity<Usuario> init(@PathVariable(value = "id") Long id) {
 
         Optional<Usuario> usuario = usuarioRepository.findById(id);
-
         return new ResponseEntity<Usuario>(usuario.get(), HttpStatus.OK);
     }
 
+    
+ 
+ 
+    
     @DeleteMapping(value = "/{id}", produces = "application/text")
     public String delete(@PathVariable("id") Long id) {
 
@@ -69,10 +78,17 @@ public class IndexController {
     }
 
 
+    /*Vamos supor que o carregamento de usuário seja um processo lento
+	 * e queremos controlar ele com cache para agilizar o processo*/
     @GetMapping(value = "/", produces = "application/json")
-    public ResponseEntity<List<Usuario>> usuario() {
+    @CacheEvict(value = "cacheusuarios", allEntries = true)
+    @CachePut("cacheusuarios")
+    public ResponseEntity<List<Usuario>> usuario () throws InterruptedException {
 
         List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
+        
+		Thread.sleep(6000);/*Segura o codigo por 6 segunos simulando um processo lento*/
+
 
         return new ResponseEntity<List<Usuario>>(list, HttpStatus.OK);
     }
@@ -89,7 +105,7 @@ public class IndexController {
 
         Usuario usuarioBuscado = usuarioRepository.findUserByLogin(usuario.getLogin());
         if (usuarioBuscado != null) {
-            throw new GeralException("Usuário já castrado");
+            throw new GeralException("Usuário já cadastrado");
         }
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
         usuarioSalvo.setSenha("NÃO DISPONIVEL");
@@ -107,6 +123,15 @@ public class IndexController {
             usuario.getTelefones().get(pos).setUsuario(usuario);
         }
 
+        
+        Usuario userTemporario = usuarioRepository.findUserByLogin(usuario.getLogin());
+        
+        if(! userTemporario.getSenha().equals(usuario.getSenha())) {     /*SENHAS DIFERENTES*/
+        	
+        	 usuario.setSenha(new BCryptPasswordEncoder().encode(usuario.getSenha()));
+        	
+        }
+        
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
 
         return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);

@@ -21,6 +21,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.validator.constraints.br.CPF;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties.ContainerType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,7 +44,8 @@ public class Usuario implements UserDetails {
 	
 	private String senha;
 	
-	
+	@CPF(message= "Cpf inálido")
+     private String cpf;
 	
 
 	@OneToMany(mappedBy="usuario", orphanRemoval = true, cascade = CascadeType.ALL, fetch =FetchType.LAZY)
@@ -61,12 +63,31 @@ public class Usuario implements UserDetails {
 	private List<Role> roles; /*Os papeis ou acessos*/
 	
 	
+	private String token = "";
+	
+	public void setToken(String token) {
+		this.token = token;
+	}
+	
+	public String getToken() {
+		return token;
+	}
+	
+	
 	public List<Telefone> getTelefones() {
 		return telefones;
 	}
 	
 	public void setTelefones(List<Telefone> telefones) {
 		this.telefones = telefones;
+	}
+	
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
+	}
+	
+	public String getCpf() {
+		return cpf;
 	}
 	
 
