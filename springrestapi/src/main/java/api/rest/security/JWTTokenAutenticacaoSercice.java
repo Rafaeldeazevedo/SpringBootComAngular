@@ -48,6 +48,10 @@ public class JWTTokenAutenticacaoSercice {
 		/*Adiciona no cabeçalho http*/
 		response.addHeader(HEADER_STRING, token); /*Authorization: Bearer 87878we8we787w8e78w78e78w7e87w*/
 		
+		ApplicationContextLoad.getApplicationContext()
+        .getBean(UsuarioRepository.class).atualizaTokenUser(JWT, username);
+		
+		
 		
 		/*Liberando resposta para portas diferentes que usam a API ou caso clientes web*/
 		 liberacaoCors(response);
@@ -66,6 +70,8 @@ public class JWTTokenAutenticacaoSercice {
 		
 		String token = request.getHeader(HEADER_STRING);
 		
+		
+		try {
 		if (token != null) {
 			
 			
@@ -92,8 +98,13 @@ public class JWTTokenAutenticacaoSercice {
 				}
 			}
 			
+		}/*Fim da condição do token*/
+		}catch(io.jsonwebtoken.ExpiredJwtException e) {
+		   try {
+			response.getOutputStream().println("Seu Token Esta expirado, Faça o login ou informe novo Token Para autenticação");
+		} catch (IOException e1) {}
 		}
-	
+		
 		liberacaoCors(response);
 		return null; /*Não autorizado*/
 		
